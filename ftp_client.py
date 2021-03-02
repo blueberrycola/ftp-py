@@ -5,7 +5,7 @@ TODO:
 The client program presents a command line interface that allows a user to:
 Command Line Interface Outline [X]
 (C)onnect to a server [X]
-(L)ist files located at the server. []
+(L)ist files located at the server. [X]
 (G)et (retrieve) a file from the server. []
 (S)end (put) a file from the client to the server. []
 (T)erminate the connection to the server. [X]
@@ -45,11 +45,20 @@ while(not done):
         port = int(input('Please enter port: '))
         address = (addr, port)
         client.connect(address)
-        print("Connected to: address")
 
     elif commChar == l:
         #List files
-        print('Listing files...')
+        print('Listing files: ')
+        send(commChar)
+        #Recieve the amount of strings the server will relay to client
+
+        len = client.recv(2048).decode(FORMAT)
+        len = int(len)
+        for i in range(0, len):
+            print("\tFILE: ")
+            print("\t" + "" + client.recv(1024).decode(FORMAT))
+        
+        
     elif commChar == g:
         #Get file
         filename = input('Please enter filename: ')
