@@ -26,6 +26,8 @@ print(ADDR)
 def handle_client(connection, addr):
     print(f"\t[NEW CONNECTION]: {addr}")
     connected = True
+    #Use os to list files found in FTP_DIRECTORY, send to client
+    files = os.listdir(FTP_PATH)
     while connected:
         msg_length = connection.recv(HEADER).decode(FORMAT)
         if msg_length:
@@ -35,18 +37,26 @@ def handle_client(connection, addr):
                 start()
             if msg == LIST_MESSAGE:
                 print(f"Sending File Info to {addr}")
-                #Use os to list files found in FTP_DIRECTORY, send to client
-                files = os.listdir(FTP_PATH)
                 file_len = str(len(files))
                 #Send the file length to client so it knows how many messages it will recv
                 file_len = (bytes)(file_len, 'utf-8')
                 connection.send(file_len)
-
                 print(files)
                 for f in files:
                     str_byte = (bytes)(f, 'utf-8')
                     connection.send(str_byte)
                     print(f)
+            if msg == GET_MESSAGE:
+                #Recieve file name from client
+                filename = connection.recv(HEADER).decode(FORMAT)
+                #Check if file name is in directory
+                for f in files:
+                    if f == filename:
+                        #Begin FTP Send
+                        print(f"Sending file:{filename} to {addr}")
+                        
+                print("End file loop")
+
             if msg == DC_MESSAGE:
                  connected = False
                  print(f"CONNECTION TERMINATED {addr}")

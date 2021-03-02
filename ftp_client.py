@@ -49,23 +49,33 @@ while(not done):
     elif commChar == l:
         #List files
         print('Listing files: ')
+        #Send list command to server
         send(commChar)
-        #Recieve the amount of strings the server will relay to client
-
-        len = client.recv(2048).decode(FORMAT)
+        #Find the amount of strings the server will relay to client
+        len = client.recv(HEADER).decode(FORMAT)
         len = int(len)
+        #Loop goes for how many files are in the directory
         for i in range(0, len):
-            print("\tFILE: ")
-            print("\t" + "" + client.recv(1024).decode(FORMAT))
+            print("FILE: ")
+            print("\t" + "" + client.recv(HEADER).decode(FORMAT))
         
         
     elif commChar == g:
+        #Send get command to server
+        send(commChar)
         #Get file
         filename = input('Please enter filename: ')
+        filename = (bytes)(filename, FORMAT)
+        client.send(filename)
+        #Check if file present
+        #If file present then recv from server and put into clientdir
+        #Else throw error and return to loop
     elif commChar == s:
         #Send a file
         filename = input('Please enter the filename and extension in this directory')
-
+        #Check if file present in client
+        #If file present then send to server
+        #Else throw error and return to loop
     elif commChar == t:
         #terminate connection
         send(commChar)
