@@ -5,9 +5,11 @@ import os
 
 
 HEADER = 1024   #Length of bytes 
-PORT = 5050
+CTRLPORT = 47003
+DATAPORT = CTRLPORT + 1
+
 SERVER = socket.gethostbyname(socket.gethostname())
-ADDR = (SERVER, PORT)
+ADDR = (SERVER, CTRLPORT)
 FORMAT = 'utf-8'
 PATH = os.path.dirname(os.path.abspath(__file__))
 print("Path:" + " " + PATH)
@@ -43,19 +45,53 @@ def handle_client(connection, addr):
                 connection.send(file_len)
                 print(files)
                 for f in files:
+                    #Send every filename in ftpdir
                     str_byte = (bytes)(f, 'utf-8')
                     connection.send(str_byte)
                     print(f)
             if msg == GET_MESSAGE:
-                #Recieve file name from client
+                #Recieve requested filename from client
                 filename = connection.recv(HEADER).decode(FORMAT)
-                #Check if file name is in directory
+                #Check files to make sure it is present
+                filefound = False
                 for f in files:
                     if f == filename:
-                        #Begin FTP Send
-                        print(f"Sending file:{filename} to {addr}")
-                        
-                print("End file loop")
+                        print("FILE FOUND")
+                        filefound = True
+                        #Send '#' to client to confirm file is present (ACK)
+                        connection.send((bytes)('#', FORMAT))
+                
+                
+                if filefound:
+                    #Establish data socket and open file with path
+                    #Port behaves like client, sending data to the recieving client
+                    datasocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    #Bind to client address to send file
+                    datasocket.connect((addr[0], DATAPORT))
+                    path = FTP_PATH + '\\' + filename
+                    file = open(path, 'rb')
+                    line = file.read(HEADER)
+                    while line:
+                        #Send line to client
+                        print(line)
+                        datasocket.send(line)
+                        line = file.read(HEADER)
+                print("File finished sending")
+                file.close()
+            if msg == SEND_MESSAGE:
+                newfile_name = connection.recv(HEADER).decode(FORMAT)
+                path = FTP_PATH + '\\' + newfile_name
+                #Create file for writing
+                file = open(path, 'w')
+                #Establish data socket and open file with path
+                #Port behaves like client, sending data to the recieving client
+                datasocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                #Bind to client address to send file
+                datasocket.connect((addr[0], DATAPORT+1))
+                file.write(datasocket.recv(HEADER).decode(FORMAT))
+                #Close file after done writing
+                file.close()
+
 
             if msg == DC_MESSAGE:
                  connected = False
